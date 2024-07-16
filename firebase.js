@@ -21,13 +21,5 @@ const auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage)
 });
 
-// Function to sign out the current user
-export const signOutUser = async () => {
-    try {
-        await signOut(auth); // Signs out the current user
-    } catch (error) {
-        console.error('Error signing out:', error);
-    }
-};
 
 export { db, auth, app };
