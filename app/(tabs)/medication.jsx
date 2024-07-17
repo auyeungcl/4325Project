@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: Colors.PRIMARY,
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 10,
     margin: 10,
   },
 });
