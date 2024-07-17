@@ -103,6 +103,10 @@ export default function Medication() {
     ));
   };
 
+  const CloseMedication = () =>{
+    setModalVisible(false);
+  };
+
   const AddMedication = () => {
     console.log('User ID:', userId);
     console.log('Medication Name:', medicationName);
@@ -183,9 +187,14 @@ export default function Medication() {
             {parseInt(times, 10) > 0 && renderAlarmTimeInputs()}
             
             {/* Add and close button */}
+            <View style={styles.inputContainer}>
             <TouchableOpacity style={styles.addButton} onPress={AddMedication}>
               <Text style={{ color: '#fff', fontFamily: 'montserrat-bold' }}>Add</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.addButton} onPress={CloseMedication}>
+              <Text style={{ color: '#fff', fontFamily: 'montserrat-bold' }}>Close</Text>
+            </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -247,6 +256,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10,
+    margin: 10,
   },
 });
