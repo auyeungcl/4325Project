@@ -15,6 +15,8 @@ export default function Medication() {
   const [times, setTimes] = useState(''); 
   const [alarmTimes, setAlarmTimes] = useState([]); 
   const [showTimePickerIndex, setShowTimePickerIndex] = useState(null); 
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const frequencies = [
     { key: 'daily', value: 'every day' },
@@ -57,7 +59,6 @@ export default function Medication() {
     setModalVisible(true); // Show modal
   };
 
-
   const timesSelect = (option) => {
     setTimes(option);
     // Clear alarmTimes when times is changed
@@ -68,6 +69,13 @@ export default function Medication() {
     const updatedAlarmTimes = [...alarmTimes];
     updatedAlarmTimes[index] = selectedTime;
     setAlarmTimes(updatedAlarmTimes);
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+    }
   };
 
   const renderAlarmTimeInputs = () => {
@@ -100,7 +108,9 @@ export default function Medication() {
     console.log('Medication Name:', medicationName);
     console.log('Frequency:', frequency);
     console.log('Times:', times);
+    console.log('Date:', selectedDate);
     console.log('Alarm Times:', alarmTimes);
+    
     // Add medication data to the database
     setModalVisible(false); // Close the modal 
   };
@@ -152,6 +162,21 @@ export default function Medication() {
                 data={timesPerDay} 
                 placeholder='Select times'
               />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.title}>Date:</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                <Text style={styles.inputTime}>{selectedDate.toDateString()}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={selectedDate}
+                  mode='date'
+                  display='spinner'
+                  onChange={handleDateChange}
+                />
+              )}
             </View>
             
             {/* Render alarm time inputs based on selected times */}
@@ -208,18 +233,15 @@ const styles = StyleSheet.create({
     flex: 1,
     borderColor: '#ccc',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+    padding: 13,
+    borderRadius: 10,
     fontFamily: 'montserrat-regular',
   },
   inputTime: {
-    flex: 1,
     borderColor: '#ccc',
     borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
-    fontFamily: 'montserrat-regular',
-    fontSize: 10,
+    borderRadius: 10,
+    padding: 13,
   },
   addButton: {
     backgroundColor: Colors.PRIMARY,
