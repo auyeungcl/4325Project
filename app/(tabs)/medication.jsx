@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import { Colors } from './../../constants/Colors';
-import { createUser, checkUserExists } from './../../firebaseUtils'; 
+import { createUser, checkUser, createMedication, createLog, getMedication, getFalseLog, updateLog, checkLog } from './../../firebaseUtils'; 
 import { SelectList } from 'react-native-dropdown-select-list';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+
 
 export default function Medication() {
   const { userId } = useAuth();
@@ -17,6 +19,8 @@ export default function Medication() {
   const [showTimePickerIndex, setShowTimePickerIndex] = useState(null); 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [falseLogs, setFalseLogs] = useState([]);
+  const [noLogs, setNoLogs] = useState(false);
 
   const frequencies = [
     { key: 'daily', value: 'every day' },
@@ -33,11 +37,11 @@ export default function Medication() {
     { key: '5', value: '5' },
   ];
 
-  // Create user data in database 
-  const handleUserDocument = async () => {
+  //Create user data in database 
+  const UserDocument = async () => {
     try {
-      // Check if the user data already exists
-      const userExists = await checkUserExists(userId);
+      //Check if the user data already exists
+      const userExists = await checkUser(userId);
 
       if (!userExists) {
         // Create new user data in database
@@ -49,29 +53,66 @@ export default function Medication() {
     }
   };
 
-  // Handle user document creation
+  //Handle user document creation
   useEffect(() => {
-    handleUserDocument();
+    UserDocument();
   }, [userId, user]);
 
+   //Fetch false logs for the user
+   const fetchFalseLogs = async () => {
+    try {
+      const logs = await getFalseLog(userId);
+      
+      // Convert timestamp to date
+      const logsWithDate = logs.map(log => ({
+        ...log,
+        date: log.date ? log.date.toDate() : null,
+        alarm: log.alarm ? log.alarm.toDate() : null,
+      }));
+      setFalseLogs(logsWithDate);
+
+      setNoLogs(logs.length === 0);
+    } catch (error) {
+      console.error("Error fetching false logs:", error);
+      setNoLogs(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchFalseLogs();
+  }, [userId]);
+
+  //updating status to true
+  const updateStatus = async (logId) => {
+    try {
+      await updateLog(logId); 
+      //After updating, fetch the updated false logs
+      fetchFalseLogs();
+
+    } catch (error) {
+      console.error('Error updating log status:', error);
+    }
+  };
+  
+  //on press button to show modal
   const onPress = () => {
     console.log('Add Medication start');
-    setModalVisible(true); // Show modal
+    setModalVisible(true); 
   };
 
   const timesSelect = (option) => {
     setTimes(option);
-    // Clear alarmTimes when times is changed
+    //Clear alarmTimes when times change
     setAlarmTimes([]);
   };
 
-  const handleAlarmTimeChange = (index, selectedTime) => {
+  const AlarmTimeChange = (index, selectedTime) => {
     const updatedAlarmTimes = [...alarmTimes];
     updatedAlarmTimes[index] = selectedTime;
     setAlarmTimes(updatedAlarmTimes);
   };
 
-  const handleDateChange = (event, selectedDate) => {
+  const DateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setSelectedDate(selectedDate);
@@ -93,9 +134,10 @@ export default function Medication() {
             display='spinner'
             onChange={(event, selectedTime) => {
               if (selectedTime) {
-                handleAlarmTimeChange(index, selectedTime);
+                AlarmTimeChange(index, selectedTime);
               }
-              setShowTimePickerIndex(null); // Close the picker after selection
+              //Close the date time picker 
+              setShowTimePickerIndex(null); 
             }}
           />
         )}
@@ -103,25 +145,182 @@ export default function Medication() {
     ));
   };
 
+  //Close modal
   const CloseMedication = () =>{
     setModalVisible(false);
   };
 
-  const AddMedication = () => {
+  //Add medication and one time add log to database 
+  const AddMedication = async () => {
     console.log('User ID:', userId);
     console.log('Medication Name:', medicationName);
     console.log('Frequency:', frequency);
     console.log('Times:', times);
     console.log('Date:', selectedDate);
     console.log('Alarm Times:', alarmTimes);
+
+    try {
+        // Add medication data to the database and get the generated medId
+        const medId = await createMedication(userId, medicationName, frequency, times, selectedDate, alarmTimes);
+        console.log('Medication document created in Firestore with medId:', medId);
+
+        // Add log data to the database right after submitting medication
+        const status = false;
+        if (times >= 1) {
+            for (let i = 0; i < times; i++) {
+                // Assuming alarmTimes[i] is a timestamp or can be converted to a timestamp
+                const alarmTime = new Date(alarmTimes[i]);
+                
+                // Log parameters and their types
+                console.log('Parameters passed to createLog:', {
+                    userId,
+                    medId,
+                    medicationName,
+                    times,
+                    date: selectedDate,
+                    alarmTime,
+                    status
+                });
+
+                // Call createLog for each alarm time
+                await createLog(userId, medId, medicationName, times, selectedDate, alarmTime, status);
+            }
+        }
+
+        // Close the modal
+        setModalVisible(false);
+    } catch (error) {
+        console.error('Error adding medication and logs:', error);
+    }
+};
+
+  const AddLog = async (medication) => {
+    const currentDate = new Date();
+    const SelectDate = new Date(medication.selectedDate.toDate());
+    const status = false; 
+
+
     
-    // Add medication data to the database
-    setModalVisible(false); // Close the modal 
+    // Format currentDate and selectedDate
+    const currentDateString = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
+    const selectedDateString = `${SelectDate.getFullYear()}-${SelectDate.getMonth() + 1}-${SelectDate.getDate()}`;
+  
+    // Calculate week passed
+    const weekMillisec = 1000 * 60 * 60 * 24 * 7;
+    const weekPassed = Math.floor((currentDate - SelectDate) / weekMillisec);
+
+    // Function to calculate months passed
+    const monthPassed = (currentDate, selectedDate) => {
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
+      const selectedYear = selectedDate.getFullYear();
+      const selectedMonth = selectedDate.getMonth();
+  
+      return (currentYear - selectedYear) * 12 + (currentMonth - selectedMonth);
+    };
+  
+    // Add log function
+    const OneTimeAddLog = async () => {
+      const status = false;
+      if (medication.alarmTimes.length >= 1) {
+        for (var i = 0; i < medication.alarmTimes.length; i++) {
+          const alarm = new Date(medication.alarmTimes[i].toDate());
+          const adjustedAlarm = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate(),
+            alarm.getHours(),
+            alarm.getMinutes(),
+            alarm.getSeconds()
+          );
+    
+          // Check if a log with the same medId, alarm, and userId already exists
+          const logExists = await checkLog(medication.medId, adjustedAlarm, medication.userId);
+    
+          if (logExists) {
+            console.log('Log already exists for medId, alarm, and userId:', medication.medId, adjustedAlarm, medication.userId);
+          } else {
+    
+            // If no matching log exists, create a new log
+            await createLog(
+              medication.userId,
+              medication.medId,
+              medication.medicationName,
+              medication.times, // Convert times to string
+              currentDate,
+              adjustedAlarm,
+              status
+            );
+          }
+        }
+      }
+    };
+    
+  
+    // Check conditions to add log based on frequency
+    if (medication.frequency === 'daily') {
+      if (currentDateString !== selectedDateString) {
+        await OneTimeAddLog();
+      }
+    } else if (medication.frequency === 'weekly') {
+      if (weekPassed >= 1 && Number.isInteger(weekPassed)===true) {
+        await OneTimeAddLog();
+      }
+    } else if (medication.frequency === 'monthly') {
+      const monthsPassed = monthPassed(currentDate, SelectDate);
+      if (monthsPassed >= 1 && Number.isInteger(monthsPassed)===true) {
+        await OneTimeAddLog();
+      }
+    }
   };
+ 
+
+
+ 
+
+ 
+  // get medication collection and call AddLog for each
+  useEffect(() => {
+    const getMedicationsAddLog = async () => {
+      try {
+        const medications = await getMedication();
+        medications.forEach(medication => {
+          AddLog(medication);
+        });
+      } catch (error) {
+        console.error("Error getting medications and adding log:", error);
+      }
+    };
+
+    getMedicationsAddLog();
+  }, []);
+
+ 
+
 
   return (
     <View style={styles.container}>
       <Text style={{ fontSize: 50, fontFamily: 'montserrat-bold' }}>Medication</Text>
+      
+      {/* False log view */}
+      <ScrollView>
+      {noLogs ? (
+        <Text style={styles.logText}>No logs available</Text>
+      ) : (
+        falseLogs.map(log => (
+          <View key={log.id} style={styles.logItem}>
+            <Text style={styles.logText}>Medication Name: {log.medicationName}</Text>
+            <Text style={styles.logText}>{`Date: ${log.date ? log.date.toDateString() : 'N/A'}`}</Text>
+            <Text style={styles.logText}>{`Alarm: ${log.alarm ? log.alarm.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}`}</Text>
+            <Text style={styles.logText}>Status: {log.status ? 'Taken' : 'Not Yet'}</Text>
+            <TouchableOpacity style={styles.logContainer} onPress={() => updateStatus(log.id)}>
+              <Text style={styles.logText}>Checked</Text>
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
+    </ScrollView>
+
       <TouchableOpacity style={styles.btn} onPress={onPress}>
         <Text style={{
           textAlign: 'center',
@@ -178,7 +377,7 @@ export default function Medication() {
                   value={selectedDate}
                   mode='date'
                   display='spinner'
-                  onChange={handleDateChange}
+                  onChange={DateChange}
                 />
               )}
             </View>
@@ -198,6 +397,7 @@ export default function Medication() {
           </View>
         </View>
       </Modal>
+
     </View>
   );
 }
@@ -257,5 +457,15 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     margin: 10,
+  },
+  logContainer: {
+    padding: 10,
+    backgroundColor: '#eee',
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  logText: {
+    fontSize: 18,
+    fontFamily: 'montserrat-regular',
   },
 });
