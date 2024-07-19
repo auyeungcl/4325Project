@@ -62,17 +62,6 @@ export const createLog = async (userId, medId, medicationName, times, date,  ala
   try {
     const logRef = doc(collection(db, "log"));
 
-    // Log parameters and their types
-    console.log('Parameters passed to createLog:', {
-      userId: { value: userId, type: typeof userId },
-      medId: { value: medId, type: typeof medId },
-      medicationName: { value: medicationName, type: typeof medicationName },
-      times: { value: times, type: typeof times },
-      date: { value: date, type: typeof date },
-      alarm: { value: alarmTime, type: typeof alarmTime },
-      status: { value: status, type: typeof status }
-    });
-
     await setDoc(logRef, {
       userId,
       medId,
@@ -92,10 +81,11 @@ export const createLog = async (userId, medId, medicationName, times, date,  ala
 
 
 
-export const getMedication = async () => {
+export const getMedication = async (userId) => {
   try {
     const medications = collection(db, "medication");
-    const medicationDoc = await getDocs(medications);
+    const q = query(medications, where("userId", "==", userId));
+    const medicationDoc = await getDocs(q);
     const medicationList = medicationDoc.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return medicationList;
   } catch (error) {
@@ -141,7 +131,7 @@ export const getTrueLog = async (userId) => {
 export const updateLog = async (logId) => {
   try {
     // Reference to the log document in Firestore
-    const logRef = doc(db, 'log', logId); // Assuming 'log' is your collection name
+    const logRef = doc(db, 'log', logId); 
 
     // Update the document
     await updateDoc(logRef, {
@@ -151,7 +141,7 @@ export const updateLog = async (logId) => {
     console.log(`Log with ID ${logId} updated successfully to true`);
   } catch (error) {
     console.error('Error updating log status:', error);
-    throw error; // Optional: Handle or throw the error as needed
+    throw error; 
   }
 };
 
@@ -167,7 +157,8 @@ export const checkLog = async (medId, alarm, userId) => {
     );
     
     const querySnapshot = await getDocs(logQuery);
-    return !querySnapshot.empty; // Returns true if a matching log exists
+    //Returns true if matching log exists
+    return !querySnapshot.empty; 
   } catch (error) {
     console.error("Error checking if log exists:", error);
     return false;
