@@ -5,7 +5,9 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import LoginScreen from './../components/LoginScreen';
 import { Stack } from 'expo-router';
-import { Colors } from './../constants/Colors'
+import { Colors } from './../constants/Colors';
+import * as Updates from 'expo-updates';
+import { FontAwesome5, MaterialCommunityIcons} from '@expo/vector-icons';
 
 const tokenCache = {
   async getToken(key) {
@@ -57,7 +59,24 @@ const SignOutButton = () => {
 
   return (
     <TouchableOpacity onPress={handleSignOut} style={styles.btn}>
-      <Text style={styles.btnText}>Sign Out</Text>
+      <FontAwesome5 name="sign-out-alt" size={24}/>
+    </TouchableOpacity>
+  );
+};
+
+//Reload button
+const ReloadButton = () => {
+  const reloadApp = async () => {
+    try {
+      await Updates.reloadAsync();
+    } catch (error) {
+      console.error('Error reloading app:', error);
+    }
+  };
+
+  return (
+    <TouchableOpacity onPress={reloadApp} style={styles.btn}>
+      <FontAwesome5 name="sync-alt" size={24}/>
     </TouchableOpacity>
   );
 };
@@ -83,7 +102,12 @@ export default function RootLayout() {
             options={{
               headerLeft: () => <GetUser />,
               headerTitle: '',
-              headerRight: () => <SignOutButton />
+              headerRight: () => (
+                <View style={styles.btnContainer}>
+                  <ReloadButton />
+                  <SignOutButton />
+                </View>
+              ),
             }}
           />
         </Stack>
@@ -106,18 +130,14 @@ const styles = StyleSheet.create({
     fontFamily: 'montserrat-bold',
     fontSize: 16,
   },
-  btn:{
-    backgroundColor: Colors.RED, 
-    paddingLeft: 14, 
-    paddingRight: 14,
-    paddingTop: 7,
-    paddingBottom: 7,
-    borderRadius: 20,
+  btnContainer:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
   },
-  btnText:{
-    color: 'white', 
-    fontFamily: 'montserrat-bold', 
-    fontSize: 16,
+  btn:{
+    alignSelf: 'center',
+    padding: 15,
   },
 })
 
