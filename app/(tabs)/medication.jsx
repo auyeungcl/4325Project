@@ -5,6 +5,7 @@ import { Colors } from './../../constants/Colors';
 import { createUser, checkUser, createMedication, createLog, getMedication, getFalseLog, updateLog, checkLog } from './../../firebaseUtils'; 
 import { SelectList } from 'react-native-dropdown-select-list';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { FontAwesome5} from '@expo/vector-icons';
 
 
 
@@ -201,15 +202,15 @@ export default function Medication() {
 
 
     
-    // Format currentDate and selectedDate
+    //Format currentDate and selectedDate
     const currentDateString = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
     const selectedDateString = `${SelectDate.getFullYear()}-${SelectDate.getMonth() + 1}-${SelectDate.getDate()}`;
   
-    // Calculate week passed
+    //Calculate week passed
     const weekMillisec = 1000 * 60 * 60 * 24 * 7;
     const weekPassed = Math.floor((currentDate - SelectDate) / weekMillisec);
 
-    // Function to calculate months passed
+    //Calculate months passed
     const monthPassed = (currentDate, selectedDate) => {
       const currentYear = currentDate.getFullYear();
       const currentMonth = currentDate.getMonth();
@@ -283,7 +284,7 @@ export default function Medication() {
   useEffect(() => {
     const getMedicationsAddLog = async () => {
       try {
-        const medications = await getMedication();
+        const medications = await getMedication(userId);
         medications.forEach(medication => {
           AddLog(medication);
         });
@@ -314,7 +315,7 @@ export default function Medication() {
             <Text style={styles.logText}>{`Alarm: ${log.alarm ? log.alarm.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}`}</Text>
             <Text style={styles.logText}>Status: {log.status ? 'Taken' : 'Not Yet'}</Text>
             <TouchableOpacity style={styles.logContainer} onPress={() => updateStatus(log.id)}>
-              <Text style={styles.logText}>Checked</Text>
+            <FontAwesome5 name="check" size={24}/>
             </TouchableOpacity>
           </View>
         ))
