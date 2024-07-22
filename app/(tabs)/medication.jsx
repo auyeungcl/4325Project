@@ -299,14 +299,17 @@ export default function Medication() {
       ) : (
         falseLogs.map(log => (
           <View key={log.id} style={styles.logItem}>
-            <Text style={styles.logText}>Medication Name: {log.medicationName}</Text>
-            <Text style={styles.logText}>{`Date: ${log.date ? log.date.toDateString() : 'N/A'}`}</Text>
-            <Text style={styles.logText}>{`Alarm: ${log.alarm ? log.alarm.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}`}</Text>
-            <Text style={styles.logText}>Status: {log.status ? 'Taken' : 'Not Yet'}</Text>
+            <View>
+              <Text style={styles.logText}>Medication Name: {log.medicationName}</Text>
+              <Text style={styles.logText}>{`Date: ${log.date ? log.date.toDateString() : 'N/A'}`}</Text>
+              <Text style={styles.logText}>{`Alarm: ${log.alarm ? log.alarm.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}`}</Text>
+              <Text style={styles.logText}>Status: {log.status ? 'Taken' : 'Not Yet'}</Text>
+            </View>
             <TouchableOpacity style={styles.logContainer} onPress={() => updateStatus(log.id)}>
-            <FontAwesome5 name="check" size={24}/>
+              <FontAwesome5 name="check" size={24}/>
             </TouchableOpacity>
           </View>
+          
         ))
       )}
     </ScrollView>
@@ -448,14 +451,24 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     margin: 10,
   },
+  logItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  logText: {
+    fontSize: 18,
+    fontFamily: 'montserrat-regular',
+  },
   logContainer: {
     padding: 10,
     backgroundColor: '#eee',
     borderRadius: 5,
     marginBottom: 10,
   },
-  logText: {
-    fontSize: 18,
-    fontFamily: 'montserrat-regular',
-  },
+  
 });
