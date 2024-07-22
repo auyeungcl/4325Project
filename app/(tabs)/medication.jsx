@@ -310,11 +310,7 @@ export default function Medication() {
     </ScrollView>
 
       <TouchableOpacity style={styles.btn} onPress={onPress}>
-        <Text style={{
-          textAlign: 'center',
-          color: '#fff',
-          fontFamily: 'montserrat-bold',
-        }}>+ Add Medication</Text>
+        <Text style={styles.btnText}>+ Add Medication</Text>
       </TouchableOpacity>
 
       {/* Modal */}
@@ -403,6 +399,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginHorizontal: 20,
     alignSelf: 'center',
+  },
+  btnText: {
+    textAlign: 'center',
+    color: '#fff',
+    fontFamily: 'montserrat-bold',
+    fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
