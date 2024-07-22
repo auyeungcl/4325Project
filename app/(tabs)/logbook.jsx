@@ -11,7 +11,7 @@ export default function logbook() {
   const fetchTrueLogs = async () => {
     try {
       const logs = await getTrueLog(userId);
-      // Convert timestamp to date
+      //Convert timestamp to date
       const logsWithDate = logs.map(log => ({
         ...log,
         date: log.date ? log.date.toDate() : null,
