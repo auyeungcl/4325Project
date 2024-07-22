@@ -64,7 +64,7 @@ export default function Medication() {
     try {
       const logs = await getFalseLog(userId);
       
-      // Convert timestamp to date
+      //Convert timestamp to date
       const logsWithDate = logs.map(log => ({
         ...log,
         date: log.date ? log.date.toDate() : null,
@@ -79,28 +79,29 @@ export default function Medication() {
     }
   };
 
+  //Handle fetching flase logs for user
   useEffect(() => {
     fetchFalseLogs();
   }, [userId]);
 
-  //updating status to true
+  //Updating log status to true
   const updateStatus = async (logId) => {
     try {
       await updateLog(logId); 
+      
       //After updating, fetch the updated false logs
       fetchFalseLogs();
-
     } catch (error) {
       console.error('Error updating log status:', error);
     }
   };
   
-  //on press button to show modal
+  //On press button to show modal
   const onPress = () => {
-    console.log('Add Medication start');
     setModalVisible(true); 
   };
-
+  
+  //Getting corresponding alarmTimes input boxes
   const timesSelect = (option) => {
     setTimes(option);
     //Clear alarmTimes when times change
@@ -113,13 +114,14 @@ export default function Medication() {
     setAlarmTimes(updatedAlarmTimes);
   };
 
-  const DateChange = (event, selectedDate) => {
+  const DateChange = (selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setSelectedDate(selectedDate);
     }
   };
 
+  //Using date time picker for selecting date and time
   const renderAlarmTimeInputs = () => {
     return [...Array(parseInt(times, 10))].map((_, index) => (
       <View key={index} style={styles.inputContainer}>
@@ -151,7 +153,7 @@ export default function Medication() {
     setModalVisible(false);
   };
 
-  //Add medication and one time add log to database 
+  //Add medication and log immediately to database 
   const AddMedication = async () => {
     console.log('User ID:', userId);
     console.log('Medication Name:', medicationName);
@@ -161,47 +163,35 @@ export default function Medication() {
     console.log('Alarm Times:', alarmTimes);
 
     try {
-        // Add medication data to the database and get the generated medId
+        //Add medication data to the database and get the generated medId
         const medId = await createMedication(userId, medicationName, frequency, times, selectedDate, alarmTimes);
         console.log('Medication document created in Firestore with medId:', medId);
 
-        // Add log data to the database right after submitting medication
+        //Add log data to the database right after submitting medication
         const status = false;
         if (times >= 1) {
             for (let i = 0; i < times; i++) {
-                // Assuming alarmTimes[i] is a timestamp or can be converted to a timestamp
-                const alarmTime = new Date(alarmTimes[i]);
-                
-                // Log parameters and their types
-                console.log('Parameters passed to createLog:', {
-                    userId,
-                    medId,
-                    medicationName,
-                    times,
-                    date: selectedDate,
-                    alarmTime,
-                    status
-                });
-
-                // Call createLog for each alarm time
-                await createLog(userId, medId, medicationName, times, selectedDate, alarmTime, status);
+              //Getting one alarm time form the array
+              const alarmTime = new Date(alarmTimes[i]);
+              //Ceate Log
+              await createLog(userId, medId, medicationName, times, selectedDate, alarmTime, status);
             }
         }
 
-        // Close the modal
+        //Close the modal
         setModalVisible(false);
     } catch (error) {
         console.error('Error adding medication and logs:', error);
     }
-};
+  };
 
+  //Add log 
   const AddLog = async (medication) => {
     const currentDate = new Date();
     const SelectDate = new Date(medication.selectedDate.toDate());
     const status = false; 
 
 
-    
     //Format currentDate and selectedDate
     const currentDateString = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1}-${currentDate.getDate()}`;
     const selectedDateString = `${SelectDate.getFullYear()}-${SelectDate.getMonth() + 1}-${SelectDate.getDate()}`;
@@ -220,7 +210,7 @@ export default function Medication() {
       return (currentYear - selectedYear) * 12 + (currentMonth - selectedMonth);
     };
   
-    // Add log function
+    //Add log function
     const OneTimeAddLog = async () => {
       const status = false;
       if (medication.alarmTimes.length >= 1) {
@@ -235,7 +225,7 @@ export default function Medication() {
             alarm.getSeconds()
           );
     
-          // Check if a log with the same medId, alarm, and userId already exists
+          //Check if a log with the same medId, alarm, and userId already exists
           const logExists = await checkLog(medication.medId, adjustedAlarm, medication.userId);
     
           if (logExists) {
@@ -243,11 +233,10 @@ export default function Medication() {
           } else {
     
             // If no matching log exists, create a new log
-            await createLog(
-              medication.userId,
+            await createLog(medication.userId,
               medication.medId,
               medication.medicationName,
-              medication.times, // Convert times to string
+              medication.times, 
               currentDate,
               adjustedAlarm,
               status
@@ -258,7 +247,7 @@ export default function Medication() {
     };
     
   
-    // Check conditions to add log based on frequency
+    //Check conditions to add log based on frequency
     if (medication.frequency === 'daily') {
       if (currentDateString !== selectedDateString) {
         await OneTimeAddLog();
@@ -280,7 +269,7 @@ export default function Medication() {
  
 
  
-  // get medication collection and call AddLog for each
+  //Get medication collection and call AddLog for each when the app load
   useEffect(() => {
     const getMedicationsAddLog = async () => {
       try {
