@@ -60,11 +60,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
-  logContainer: {
+  logItem: {
+    alignItems: 'right',
+    width: '100%',
     padding: 10,
-    backgroundColor: '#eee',
-    borderRadius: 5,
-    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
   logText: {
     fontSize: 18,
