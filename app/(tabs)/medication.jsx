@@ -264,11 +264,6 @@ export default function Medication() {
     }
   };
  
-
-
- 
-
- 
   //Get medication collection and call AddLog for each when the app load
   useEffect(() => {
     const getMedicationsAddLog = async () => {
@@ -285,9 +280,9 @@ export default function Medication() {
     getMedicationsAddLog();
   }, []);
 
- 
 
 
+  
   return (
     <View style={styles.container}>
       <Text style={{ fontSize: 50, fontFamily: 'montserrat-bold' }}>Medication</Text>
@@ -466,7 +461,6 @@ const styles = StyleSheet.create({
   },
   logContainer: {
     padding: 10,
-    backgroundColor: '#eee',
     borderRadius: 5,
     marginBottom: 10,
   },
