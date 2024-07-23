@@ -1,5 +1,5 @@
 import { db } from './firebase'; 
-import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, updateDoc, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, updateDoc, getDocs, deleteDoc ,Timestamp } from 'firebase/firestore';
 
 //Check if the user already exists in the database
 export const checkUser = async (userId) => {
@@ -44,7 +44,7 @@ export const createMedication = async (userId, medicationName, frequency, times,
       selectedDate,
       alarmTimes
     });
-    // Update the mediation document with its ID
+    //Update the mediation document with its ID
     await setDoc(medRef, { medId: medRef.id }, { merge: true });
 
     return medRef.id;
@@ -71,7 +71,7 @@ export const createLog = async (userId, medId, medicationName, times, date,  ala
       
     });
 
-    // Update the log document with its ID
+    //Update the log document with its ID
     await setDoc(logRef, { logId: logRef.id }, { merge: true });
     console.log('Log document created in Firestore');
   } catch (error) {
@@ -94,24 +94,27 @@ export const getMedication = async (userId) => {
   }
 };
 
-//Get status:false logs with same userId with the user
-export const getFalseLog = async (userId) => {
+//Delete medication document
+export const deleteMedication = async (medId) => {
   try {
-    const logsRef = collection(db, "log");
-    
-    //Query for finding false log with same userId
-    const q = query(logsRef, where("status", "==", false), where("userId", "==", userId));
-    
-    //Execute query
-    const logDoc = await getDocs(q);
-    const logList = logDoc.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    return logList;
+    // Delete the medication document
+    await deleteDoc(doc(db, 'medication', medId));
+    console.log('Medication document successfully deleted!');
+
+    const logsQuery = query(collection(db, 'log'), where('medId', '==', medId), where('status', '==', false));
+    const logsSnapshot = await getDocs(logsQuery);
+
+    //Delete corresponding log document 
+    logsSnapshot.forEach(async (logDoc) => {
+      await deleteDoc(doc(db, 'log', logDoc.id));
+      console.log('Log document successfully deleted!');
+    });
+
   } catch (error) {
-    console.error("Error fetching logs with status false from Firestore:", error);
-    throw error;
+    console.error('Error removing medication or logs: ', error);
   }
 };
+
 
 //Get status:true logs with same userId with the user
 export const getTrueLog = async (userId) => {
