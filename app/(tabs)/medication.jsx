@@ -114,7 +114,7 @@ export default function Medication() {
     setAlarmTimes(updatedAlarmTimes);
   };
 
-  const DateChange = (selectedDate) => {
+  const DateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
       setSelectedDate(selectedDate);
