@@ -99,7 +99,7 @@ export const getFalseLog = async (userId) => {
   try {
     const logsRef = collection(db, "log");
     
-    //Query for finding false log and same userId
+    //Query for finding false log with same userId
     const q = query(logsRef, where("status", "==", false), where("userId", "==", userId));
     
     //Execute query
@@ -118,7 +118,7 @@ export const getTrueLog = async (userId) => {
   try {
     const logsRef = collection(db, "log");
     
-    //Query for finding true log and same userId
+    //Query for finding true log with same userId
     const q = query(logsRef, where("status", "==", true), where("userId", "==", userId));
     
     //Execute query
@@ -128,6 +128,45 @@ export const getTrueLog = async (userId) => {
     return logList;
   } catch (error) {
     console.error("Error fetching logs with status false from Firestore:", error);
+    throw error;
+  }
+};
+
+//Get status:false and date==today log
+export const getTodayLog = async (userId) => {
+  try {
+    const logsRef = collection(db, "log");
+    
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    const startTimestamp = Timestamp.fromDate(start);
+    const endTimestamp = Timestamp.fromDate(end);
+
+    console.log("Start Timestamp:", startTimestamp.toDate());
+    console.log("End Timestamp:", endTimestamp.toDate());
+
+    // Query for finding false logs with same userId and today's date
+    const q = query(
+      logsRef, 
+      where("status", "==", false), 
+      where("userId", "==", userId),
+      where("date", ">=", startTimestamp),
+      where("date", "<=", endTimestamp)
+    );
+
+    // Execute query
+    const logDoc = await getDocs(q);
+    const logList = logDoc.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    console.log("Fetched Logs:", logList);
+
+    return logList;
+  } catch (error) {
+    console.error("Error fetching logs with status false and current date from Firestore:", error);
     throw error;
   }
 };
