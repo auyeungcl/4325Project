@@ -45,7 +45,7 @@ export default function Medication() {
       const userExists = await checkUser(userId);
 
       if (!userExists) {
-        // Create new user data in database
+        //Create new user data in database
         await createUser(userId, user.primaryEmailAddressId, user.firstName, user.lastName, user.imageUrl);
         console.log('User document created in Firestore');
       }
