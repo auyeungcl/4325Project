@@ -8,13 +8,13 @@ export default function Reminder() {
   const [todayLogs, setTodayLogs] = useState([]);
   const [noLogs, setNoLogs] = useState(false);
 
-  // Fetch today false logs for the user
+  //Fetch today false logs for the user
   const fetchTodayLogs = async () => {
     try {
       if (userId) {
         const logs = await getTodayLog(userId);
 
-        // Convert Firestore Timestamp to JavaScript Date object
+        //Convert timestamp to date
         const logsWithDate = logs.map(log => ({
           ...log,
           date: log.date ? log.date.toDate() : null,
