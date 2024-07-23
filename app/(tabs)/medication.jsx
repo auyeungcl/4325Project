@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native';
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import { Colors } from './../../constants/Colors';
-import { createUser, checkUser, createMedication, createLog, getMedication, getFalseLog, updateLog, checkLog } from './../../firebaseUtils'; 
+import { createUser, checkUser, createMedication, createLog, getMedication, checkLog, deleteMedication } from './../../firebaseUtils'; 
 import { SelectList } from 'react-native-dropdown-select-list';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { FontAwesome5} from '@expo/vector-icons';
@@ -20,8 +20,8 @@ export default function Medication() {
   const [showTimePickerIndex, setShowTimePickerIndex] = useState(null); 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [falseLogs, setFalseLogs] = useState([]);
-  const [noLogs, setNoLogs] = useState(false);
+  const [medications, setMedications] = useState([]);
+  const [noMedications, setNoMedications] = useState(false);
 
   const frequencies = [
     { key: 'daily', value: 'every day' },
@@ -59,42 +59,29 @@ export default function Medication() {
     UserDocument();
   }, [userId, user]);
 
-   //Fetch false logs for the user
-   const fetchFalseLogs = async () => {
+   //Fetch medication for the user
+   const fetchMedications = async () => {
     try {
-      const logs = await getFalseLog(userId);
+      const medications = await getMedication(userId);
       
-      //Convert timestamp to date
-      const logsWithDate = logs.map(log => ({
-        ...log,
-        date: log.date ? log.date.toDate() : null,
-        alarm: log.alarm ? log.alarm.toDate() : null,
+      const medicationsWithDate = medications.map(medication => ({
+        ...medication
       }));
-      setFalseLogs(logsWithDate);
-
-      setNoLogs(logs.length === 0);
+      
+      setMedications(medicationsWithDate);
+  
+      setNoMedications(medications.length === 0);
     } catch (error) {
-      console.error("Error fetching false logs:", error);
-      setNoLogs(true);
+      console.error("Error fetching medications:", error);
+      setNoMedications(true);
     }
   };
 
-  //Handle fetching flase logs for user
+  //Handle fetching medication for user
   useEffect(() => {
-    fetchFalseLogs();
+    fetchMedications();
   }, [userId]);
 
-  //Updating log status to true
-  const updateStatus = async (logId) => {
-    try {
-      await updateLog(logId); 
-      
-      //After updating, fetch the updated false logs
-      fetchFalseLogs();
-    } catch (error) {
-      console.error('Error updating log status:', error);
-    }
-  };
   
   //On press button to show modal
   const onPress = () => {
@@ -104,7 +91,7 @@ export default function Medication() {
   //Getting corresponding alarmTimes input boxes
   const timesSelect = (option) => {
     setTimes(option);
-    //Clear alarmTimes when times change
+
     setAlarmTimes([]);
   };
 
@@ -139,7 +126,6 @@ export default function Medication() {
               if (selectedTime) {
                 AlarmTimeChange(index, selectedTime);
               }
-              //Close the date time picker 
               setShowTimePickerIndex(null); 
             }}
           />
@@ -287,22 +273,31 @@ export default function Medication() {
     <View style={styles.container}>
       <Text style={{ fontSize: 50, fontFamily: 'montserrat-bold' }}>Medication</Text>
       
-      {/* False log view */}
+      {/* Medication view */}
       <ScrollView>
-      {noLogs ? (
+      {noMedications ? (
         <Text style={styles.logText}>No logs available</Text>
       ) : (
-        falseLogs.map(log => (
-          <View key={log.id} style={styles.logItem}>
+        medications.map(medication => (
+          <View key={medication.id} style={styles.logItem}>
             <View>
-              <Text style={styles.logText}>Medication Name: {log.medicationName}</Text>
-              <Text style={styles.logText}>{`Date: ${log.date ? log.date.toDateString() : 'N/A'}`}</Text>
-              <Text style={styles.logText}>{`Alarm: ${log.alarm ? log.alarm.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'N/A'}`}</Text>
-              <Text style={styles.logText}>Status: {log.status ? 'Taken' : 'Not Yet'}</Text>
+              <Text style={styles.logText}>Medication Name: {medication.medicationName}</Text>
+              <Text style={styles.logText}>Frequency: {medication.frequency}</Text>
+              <Text style={styles.logText}>Times: {medication.times}</Text>
+              <Text style={styles.logText}>{`Date: ${medication.selectedDate ? medication.selectedDate.toDate().toDateString() : 'N/A'}`}</Text>
+            <Text style={styles.logText}>
+              AlarmTimes: 
+              {medication.alarmTimes ? 
+                medication.alarmTimes.map((alarm, index) => (
+                  <Text key={index}>{alarm.toDate().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</Text>
+                ))
+                : 'N/A'}
+            </Text>
             </View>
-            <TouchableOpacity style={styles.logContainer} onPress={() => updateStatus(log.id)}>
-              <FontAwesome5 name="check" size={24}/>
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.logContainer} onPress={() => deleteMedication(medication.id)}>
+                <FontAwesome5 name="trash-alt" size={24}/>
+              </TouchableOpacity>
+
           </View>
           
         ))
