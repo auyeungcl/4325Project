@@ -276,7 +276,7 @@ export default function Medication() {
       {/* Medication view */}
       <ScrollView>
       {noMedications ? (
-        <Text style={styles.logText}>No medications added</Text>
+        <Text style={styles.logText}>No medication added</Text>
       ) : (
         medications.map(medication => (
           <View key={medication.id} style={styles.logItem}>
