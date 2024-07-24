@@ -1,3 +1,4 @@
+import { Alert } from 'react-native';
 import { db } from './firebase'; 
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, updateDoc, getDocs, deleteDoc ,Timestamp } from 'firebase/firestore';
 
@@ -109,6 +110,8 @@ export const deleteMedication = async (medId) => {
       await deleteDoc(doc(db, 'log', logDoc.id));
       console.log('Log document successfully deleted!');
     });
+
+    Alert.alert('Success', 'Medication Deleted!');
 
   } catch (error) {
     console.error('Error removing medication or logs: ', error);
